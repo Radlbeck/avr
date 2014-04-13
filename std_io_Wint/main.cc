@@ -1,7 +1,7 @@
 /*
  *	Basic I/O with a timer and inturrpts
  *
- *	by: Radlbeck
+ *	by: Andrew Radlbeck
  *	F_CPU 1200000
  */
 #include <avr/io.h>
@@ -25,6 +25,7 @@
 /* flags */
 bool lid_down  = false;
 bool light_ran = false;
+bool had_int   = false;
 
 void init(void)
 {
@@ -34,9 +35,32 @@ void init(void)
 	sei();				// start inturrupts
 }
 
+/* lets us know the current lid posision */
 void set_flags(void)
 {
 	lid_down = (RSW)? true : false;
+}
+
+/* this funtion handles when the relay is on 
+ * it allows it to be inturrupted at any time */
+void set_light(void)
+{
+	if(lid_down && !light_ran){
+		RELAY(1);
+		for(int j = 0; j < 10; j++){		// 10 second inturruptable delay
+			for(int i = 0; i < 1000; i++){
+				if(had_int){
+					had_int = false;
+				       	return;
+				}
+				_delay_ms(1);
+			}
+		}
+		light_ran = true;
+		had_int = false;
+		RELAY(0);
+	}
+	return;
 }
 
 int main(void)
@@ -45,25 +69,18 @@ int main(void)
 	set_flags();
 	
 	while(1){
-		if(lid_down){
-			RELAY(1);
-		}else{
+		set_light();
+		if(!lid_down){			// reset all flags when the lid gets lifted
 			RELAY(0);
+			light_ran = false;
 		}
-/*		if(lid_down && !light_ran){
-			RELAY(1);
-			for(int i = 0; i < 10; i++) _delay_ms(1000);
-			light_ran = true;
-		}
-		RELAY(0);*/
 	}
 }
 
 ISR (INT0_vect)
 {
 	set_flags();
-/*	if(!RSW){	// saftey check
-		RELAY(0);
-	}	*/
+	had_int = true;		// residual inturrupt flag
+	if(!RSW) RELAY(0);	// safety check
 	_delay_ms(1);
 }
