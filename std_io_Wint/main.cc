@@ -1,5 +1,5 @@
 /*
- *	Basic I/O with a timer and inturrpts
+ *	Basic I/O with a timer and interrupts
  *
  *	by: Andrew Radlbeck
  *	F_CPU 1200000
@@ -8,7 +8,7 @@
 #include <util/delay.h>
 #include <avr/interrupt.h>
 
-/* macros for bitsetting */
+/* macros for bit-setting */
 #define SETBIT(ADDRESS,BIT)   (ADDRESS |= (1<<BIT))
 #define CLEARBIT(ADDRESS,BIT) (ADDRESS &= ~(1<<BIT))
 #define FLIPBIT(ADDRESS,BIT)  (ADDRESS ^= (1<<BIT))
@@ -29,25 +29,25 @@ bool had_int   = false;
 
 void init(void)
 {
-	DDRB   = (1 << P_RELAY);	// defualt input, set output
-	GIMSK |= (1 << INT0);		// enable inturrupts
+	DDRB   = (1 << P_RELAY);	// default input, set output
+	GIMSK |= (1 << INT0);		// enable interrupts
 	MCUCR |= (1 << ISC00);		// trigger on all edges
-	sei();				// start inturrupts
+	sei();				// start interrupts
 }
 
-/* lets us know the current lid posision */
+/* lets us know the current lid position */
 void set_flags(void)
 {
 	lid_down = (RSW)? true : false;
 }
 
-/* this funtion handles when the relay is on 
- * it allows it to be inturrupted at any time */
+/* this function handles when the relay is on 
+ * it allows it to be interrupted at any time */
 void set_light(void)
 {
 	if(lid_down && !light_ran){
 		RELAY(1);
-		for(int j = 0; j < 10; j++){		// 10 second inturruptable delay
+		for(int j = 0; j < 10; j++){		// 10 second interruptible delay
 			for(int i = 0; i < 1000; i++){
 				if(had_int){
 					had_int = false;
@@ -80,7 +80,7 @@ int main(void)
 ISR (INT0_vect)
 {
 	set_flags();
-	had_int = true;		// residual inturrupt flag
+	had_int = true;		// residual interrupt flag
 	if(!RSW) RELAY(0);	// safety check
 	_delay_ms(1);
 }
